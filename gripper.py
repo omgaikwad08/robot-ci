@@ -1,4 +1,4 @@
-GRIPPER_TIMEOUT_MS = 250
+GRIPPER_TIMEOUT_MS = 300
 
 
 def grip_ok(elapsed_ms):
