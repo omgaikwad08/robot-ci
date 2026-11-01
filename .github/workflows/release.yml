@@ -1,0 +1,29 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write              # allows this workflow to create a GitHub Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -v -m "not endurance"
+      - name: Package
+        run: |
+          mkdir -p dist
+          echo "{\"version\": \"${GITHUB_REF_NAME}\", \"commit\": \"${GITHUB_SHA}\"}" > build_info.json
+          tar czf "dist/robot-${GITHUB_REF_NAME}.tar.gz" gripper.py build_info.json
+          cd dist && sha256sum ./*.tar.gz > SHA256SUMS
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes
